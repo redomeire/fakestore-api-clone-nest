@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  firstname String
+  lastname  String
+  phone     String
+  city                  String
+  street                String
+  number                Int
+  zipcode               String
+  geolocation_latitude  Float
+  geolocation_longitude Float
+  cart Cart?
+
+  @@map("users")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  categoryId  Int
+  title       String
+  price       Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  description String
+  image       String
+  productToCart ProductToCart?
+
+  @@unique([categoryId])
+  @@map("products")
+}
+
+model Category {
+  id      Int      @id @default(autoincrement())
+  name    String
+  Product Product?
+
+  @@map("categories")
+}
+
+model ProductToCart {
+  id Int @id @default(autoincrement())
+  productId Int
+  products Product? @relation(fields: [productId], references: [id])
+  cartId Int
+  cart Cart? @relation(fields: [cartId], references: [id])
+
+  @@unique([productId])
+  @@map("product_to_carts")
+}
+
+model Cart {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User? @relation(fields: [userId], references: [id])
+  date DateTime
+  productToCart ProductToCart[]
+
+  @@unique([userId])
+  @@map("carts")
+}
