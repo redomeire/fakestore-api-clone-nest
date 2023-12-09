@@ -2,11 +2,12 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as argon from 'argon2';
-import { SignInDto } from './dto/signin.dto';
+import { SignUpDto } from './dto/signup.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,35 +16,14 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(body: SignInDto) {
-    const {
-      city,
-      email,
-      firstname,
-      geolocation_latitude,
-      geolocation_longitude,
-      lastname,
-      address_number,
-      password,
-      phone,
-      street,
-      username,
-      zipcode,
-    } = body;
+  async signUp(body: SignUpDto) {
+    const hashedPassword = await argon.hash(body.password);
+
     const user = await this.prismaService.user.create({
       data: {
-        city,
-        email,
-        firstname,
-        geolocation_latitude,
-        geolocation_longitude,
-        lastname,
-        number: address_number,
-        password,
-        phone,
-        street,
-        username,
-        zipcode,
+        ...body,
+        number: body.number,
+        password: hashedPassword,
       },
     });
 
@@ -77,5 +57,9 @@ export class AuthService {
     return isUserExist;
   }
 
-  async signOut() {}
+  async signOut(token: string) {
+    if (!token) throw new UnauthorizedException();
+
+    return 'logout successful';
+  }
 }

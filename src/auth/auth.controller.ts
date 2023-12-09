@@ -1,35 +1,44 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
-  Request,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guard/auth.guard';
+import { SignInDto } from './dto/signin.dto';
+import { SignUpDto } from './dto/signup.dto';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Public } from './metadata/auth.metadata';
 
+@ApiTags('Authorization')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Public()
   @HttpCode(HttpStatus.OK)
-  @Post('login')
-  signIn(@Body() signInDto: Record<string, any>) {
-    return this.authService.signIn(signInDto.username, signInDto.password);
+  @Post('register')
+  @ApiResponse({ status: 201, description: 'new user created' })
+  signUp(@Body() signUpDto: SignUpDto) {
+    return this.authService.signUp(signUpDto);
   }
 
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({ status: 201, description: 'success sign in' })
+  @ApiResponse({ status: '4XX', description: 'credentials error' })
+  @Post('login')
+  signIn(@Body() signInDto: SignInDto) {
+    return this.authService.signIn(signInDto.email, signInDto.password);
   }
 
   @UseGuards(AuthGuard)
   @Post('logout')
-  logout() {
-    return this.authService.signOut();
+  logout(@Req() request) {
+    return this.authService.signOut(request['token']);
   }
 }
